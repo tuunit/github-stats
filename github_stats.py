@@ -226,6 +226,8 @@ query {
       contributionCalendar {{
         totalContributions
       }}
+      totalPullRequestContributions
+      totalPullRequestReviewContributions
     }}
 """
 
