@@ -269,6 +269,8 @@ class Stats(object):
         self._stargazers: Optional[int] = None
         self._forks: Optional[int] = None
         self._total_contributions: Optional[int] = None
+        self._total_pull_requests: Optional[int] = None
+        self._total_pull_requests_reviewed: Optional[int] = None
         self._languages: Optional[Dict[str, Any]] = None
         self._repos: Optional[Set[str]] = None
         self._lines_changed: Optional[Tuple[int, int]] = None
@@ -473,6 +475,62 @@ Languages:
                 "totalContributions", 0
             )
         return cast(int, self._total_contributions)
+
+    @property
+    async def total_pull_requests(self) -> int:
+        """
+        :return: count of user's total pull requests as defined by GitHub
+        """
+        if self._total_pull_requests is not None:
+            return self._total_pull_requests
+
+        self._total_pull_requests = 0
+        years = (
+            (await self.queries.query(Queries.contrib_years()))
+            .get("data", {})
+            .get("viewer", {})
+            .get("contributionsCollection", {})
+            .get("contributionYears", [])
+        )
+        by_year = (
+            (await self.queries.query(Queries.all_contribs(years)))
+            .get("data", {})
+            .get("viewer", {})
+            .values()
+        )
+        for year in by_year:
+            self._total_pull_requests += year.get(
+                "totalPullRequestContributions", 0
+            )
+        return cast(int, self._total_pull_requests)
+
+    @property
+    async def total_pull_request_reviews(self) -> int:
+        """
+        :return: count of user's total pull requests reviewed as defined by GitHub
+        """
+        if self._total_pull_requests_reviewed is not None:
+            return self._total_pull_requests_reviewed
+
+        self._total_pull_requests_reviewed = 0
+        years = (
+            (await self.queries.query(Queries.contrib_years()))
+            .get("data", {})
+            .get("viewer", {})
+            .get("contributionsCollection", {})
+            .get("contributionYears", [])
+        )
+        by_year = (
+            (await self.queries.query(Queries.all_contribs(years)))
+            .get("data", {})
+            .get("viewer", {})
+            .values()
+        )
+        for year in by_year:
+            self._total_pull_requests_reviewed += year.get(
+                "totalPullRequestReviewContributions", 0
+            )
+        return cast(int, self._total_pull_requests_reviewed)
 
     @property
     async def lines_changed(self) -> Tuple[int, int]:
